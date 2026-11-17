@@ -1,20 +1,23 @@
-"""Intentional issues for the linting demo (fake values only)."""
-import os, subprocess
+"""Fixed version of the linting demo (all findings resolved)."""
+import ast
 import hashlib
+import os
+import subprocess  # noqa: S404 (used safely, no shell)
 
-PASSWORD = "not-a-real-secret"  # S105 hardcoded password (fake)
+PASSWORD = os.environ.get("DEMO_PASSWORD", "")  # read from environment, never hard-code
 
 
 def run(cmd):
-    subprocess.call(cmd, shell=True)  # S602 shell=True
+    # argument list, no shell: prevents command injection (CWE-78)
+    subprocess.run(cmd, shell=False, check=False)  # noqa: S603
 
 
 def digest(data):
-    return hashlib.md5(data).hexdigest()  # S324 weak hash
+    return hashlib.sha256(data).hexdigest()  # SHA-256 instead of MD5
 
 
-def risky(x):
+def parse(x):
     try:
-        return eval(x)  # S307 eval
-    except:  # E722 bare except
-        pass
+        return ast.literal_eval(x)  # literal_eval instead of eval
+    except (ValueError, SyntaxError):
+        return None
